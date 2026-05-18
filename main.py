@@ -17,18 +17,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-model = whisper.load_model("base")
+model = whisper.load_model("small")
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
-SYSTEM_PROMPT = """Bạn là chuyên gia huấn luyện bán hàng. Phân tích transcript cuộc gọi tiếng Việt và trả về JSON thuần (không markdown):
-{"customer_needs":["..."],"objections":[{"objection":"...","how_handled":"...","rating":"good|average|poor"}],"salesperson_performance":"...","coaching_tips":["..."],"overall_score":7}"""
+SYSTEM_PROMPT = """Bạn là chuyên gia huấn luyện bán hàng. Dưới đây là transcript thô từ cuộc gọi bán hàng tiếng Việt.
+
+Bước 1: Định dạng lại transcript thành hội thoại có 2 người:
+- Nhân viên: (người chủ động giới thiệu, tư vấn sản phẩm/dịch vụ)
+- Khách hàng: (người hỏi, phản đối, hoặc lắng nghe)
+
+Bước 2: Phân tích và trả về JSON thuần (không markdown, không giải thích):
+{
+  "formatted_transcript": "Nhân viên: ...\nKhách hàng: ...\nNhân viên: ...",
+  "customer_needs": ["nhu cầu 1", "nhu cầu 2"],
+  "objections": [{"objection": "...", "how_handled": "...", "rating": "good|average|poor"}],
+  "salesperson_performance": "nhận xét tổng thể",
+  "coaching_tips": ["tip 1", "tip 2", "tip 3"],
+  "overall_score": 7
+}"""
+
 
 class TranscribeRequest(BaseModel):
     url: str
 
+
 class AnalyzeRequest(BaseModel):
     transcript: str
+
 
 def download_drive_file(file_id):
     session = requests.Session()
@@ -42,9 +58,11 @@ def download_drive_file(file_id):
             break
     return response
 
+
 @app.get("/")
 def root():
     return {"status": "Whisper API running"}
+
 
 @app.post("/transcribe")
 def transcribe(req: TranscribeRequest):
@@ -66,6 +84,7 @@ def transcribe(req: TranscribeRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/analyze")
 def analyze(req: AnalyzeRequest):
     try:
@@ -78,7 +97,7 @@ def analyze(req: AnalyzeRequest):
             },
             json={
                 "model": "claude-sonnet-4-20250514",
-                "max_tokens": 1000,
+                "max_tokens": 2000,
                 "system": SYSTEM_PROMPT,
                 "messages": [{"role": "user", "content": req.transcript}],
             },
