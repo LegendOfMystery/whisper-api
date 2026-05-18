@@ -1,9 +1,9 @@
+import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import whisper
 import requests
 import tempfile
-import os
 
 app = FastAPI()
 model = whisper.load_model("base")  # use "small" for better Vietnamese accuracy
