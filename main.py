@@ -1,4 +1,3 @@
-cat > ~/Documents/whisper-api/main.py << 'EOF'
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -90,4 +89,3 @@ def analyze(req: AnalyzeRequest):
         return json.loads(raw.replace("```json", "").replace("```", "").strip())
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-EOF
