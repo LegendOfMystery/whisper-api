@@ -74,7 +74,8 @@ def transcribe(req: TranscribeRequest):
         response = download_drive_file(file_id)
         if response.status_code != 200:
             raise HTTPException(status_code=400, detail="Could not download file")
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp:
+        suffix = ".m4a" if any(x in req.url for x in ["m4a", "audio"]) else ".mp4"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             for chunk in response.iter_content(chunk_size=32768):
                 tmp.write(chunk)
             tmp_path = tmp.name
